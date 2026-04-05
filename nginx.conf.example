@@ -1,0 +1,71 @@
+server {
+    listen 80;
+    server_name yourdomain.com www.yourdomain.com;
+    root /var/www/seriously;
+    index aggregated_feed.html;
+
+    # SSL — uncomment after certbot setup
+    # listen 443 ssl;
+    # ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+    # if ($scheme = http) { return 301 https://$host$request_uri; }
+
+    # ── Routes ──
+
+    # Admin page
+    location = /admin {
+        try_files /admin.html =404;
+    }
+
+    # Atom feed
+    location = /feed {
+        rewrite ^ /api.php?action=feed last;
+    }
+
+    # Legacy WordPress — kill wp-* asset requests
+    location ~ ^/wp-(content|admin|json|includes)/ {
+        return 410;
+    }
+
+    # Legacy WordPress — redirect category/author/tag/date URLs to search
+    location ~ ^/category/(.+?)/?$ {
+        return 301 /?q=$1;
+    }
+    location ~ ^/author/(.+?)/?$ {
+        return 301 /?q=$1;
+    }
+    location ~ ^/tag/(.+?)/?$ {
+        return 301 /?q=$1;
+    }
+    location ~ ^/\d{4}/\d{2}/\d{2}/(.+?)/?$ {
+        return 301 /?q=$1;
+    }
+
+    # ── PHP ──
+    location ~ \.php$ {
+        include snippets/fastcgi-params.conf;
+        fastcgi_pass unix:/run/php/php-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    # ── Security ──
+
+    # Block sensitive files
+    location ~ \.(env|json|py|md|sh)$ {
+        # Allow api.php to read these server-side — just block direct web access
+        return 403;
+    }
+
+    # Allow feed_data.json for api.php (internal only)
+    location = /api.php {
+        include snippets/fastcgi-params.conf;
+        fastcgi_pass unix:/run/php/php-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    # Cache static assets
+    location ~* \.(css|js|woff2|png|jpg|ico|svg)$ {
+        expires 7d;
+        add_header Cache-Control "public, immutable";
+    }
+}

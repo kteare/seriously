@@ -59,6 +59,35 @@ Set file permissions for PHP to write:
 chmod 666 site_config.json team_feeds.json feed_data.json
 ```
 
+### EC2 / Ubuntu / Nginx
+
+```bash
+sudo apt update
+sudo apt install -y php php-pgsql php-xml php-mbstring php-curl \
+                    postgresql python3 python3-pip nginx
+pip3 install feedparser
+
+git clone https://github.com/kteare/seriously.git /var/www/mysite
+cd /var/www/mysite
+./setup.sh
+
+# Copy and edit the Nginx config
+sudo cp nginx.conf.example /etc/nginx/sites-available/mysite
+sudo ln -s /etc/nginx/sites-available/mysite /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+
+# SSL (optional)
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d yourdomain.com
+
+# Permissions
+sudo chown -R www-data:www-data /var/www/mysite
+sudo chmod 666 site_config.json team_feeds.json feed_data.json
+
+# Cron
+echo "*/30 * * * * /usr/bin/php /var/www/mysite/cron_refresh.php" | sudo crontab -
+```
+
 ### SFTP Deployment
 
 Generate a deploy script for your server:
