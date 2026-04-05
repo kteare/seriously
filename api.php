@@ -356,7 +356,9 @@ function utf8_clean($s) {
 
 function save_articles($articles) {
     $db = get_db();
-    if (!$db || empty($articles)) return;
+    if (!$db || empty($articles)) return 0;
+    // Use INSERT ... ON CONFLICT DO NOTHING first to count truly new, then upsert
+    $inserted = 0;
     $stmt = $db->prepare("
         INSERT INTO articles (link, title, author, publication, pub_url, date, date_str, summary, image, tags, enclosure_url, enclosure_type)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -365,22 +367,29 @@ function save_articles($articles) {
             image=EXCLUDED.image, tags=EXCLUDED.tags, enclosure_url=EXCLUDED.enclosure_url,
             enclosure_type=EXCLUDED.enclosure_type
     ");
+    // Check which are truly new
+    $check = $db->prepare("SELECT 1 FROM articles WHERE link = ?");
     foreach ($articles as $a) {
+        $link = utf8_clean($a['link']);
+        $check->execute([$link]);
+        $exists = $check->fetch();
+
         $tags_clean = array_map('utf8_clean', $a['tags'] ?? []);
         $tags_pg = '{' . implode(',', array_map(function($t) { return '"'.str_replace('"','\\"',$t).'"'; }, $tags_clean)) . '}';
         try {
             $stmt->execute([
-                utf8_clean($a['link']), utf8_clean($a['title']), utf8_clean($a['author']??''),
+                $link, utf8_clean($a['title']), utf8_clean($a['author']??''),
                 utf8_clean($a['publication']??''), utf8_clean($a['pub_url']??''),
                 $a['date']??null, utf8_clean($a['date_str']??''),
                 utf8_clean($a['summary']??''), utf8_clean($a['image']??''), $tags_pg,
                 utf8_clean($a['enclosure_url']??''), utf8_clean($a['enclosure_type']??''),
             ]);
+            if (!$exists) $inserted++;
         } catch (Exception $e) {
-            // Skip this article if it still fails
             continue;
         }
     }
+    return $inserted;
 }
 
 function load_all_articles() {
@@ -450,8 +459,8 @@ function refresh_batch($offset = 0, $batch_size = 10) {
         $status = check_feed_changed($url);
         if ($status === 'unchanged') { $skipped++; continue; }
         $entries = parse_feed_articles($url, $info);
-        save_articles($entries);
-        $new_count += count($entries);
+        $inserted = save_articles($entries);
+        $new_count += $inserted;
         $fetched++;
     }
     $articles = load_all_articles();

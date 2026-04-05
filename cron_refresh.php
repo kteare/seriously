@@ -31,8 +31,8 @@ while ($offset < $total) {
         $status = check_feed_changed($url);
         if ($status === 'unchanged') { $total_skipped++; continue; }
         $entries = parse_feed_articles($url, $info);
-        save_articles($entries);
-        $total_new += count($entries);
+        $inserted = save_articles($entries);
+        $total_new += $inserted;
         $total_fetched++;
     }
     $offset += $batch_size;
