@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin</title>
+<script>if(localStorage.getItem('sp-theme')==='light')document.documentElement.classList.add('light');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #151210; --card: #1e1b18; --border: #2e2a25; --border-hover: #4a4035;
+  --text: #d8d0c8; --text-bright: #f0ebe5; --text-white: #fff;
+  --muted: #8a8078; --accent: #c9a96e; --accent-dim: #a07d45;
+  --accent-glow: rgba(201,169,110,0.08); --red: #c45c4a; --green: #5a9a5a;
+  --sans: 'DM Sans', -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --radius: 6px;
+}
+html.light {
+  --bg: #f4f1ec; --card: #ffffff; --border: #ddd7ce; --border-hover: #c5bdb2;
+  --text: #3d3830; --text-bright: #1a1610; --text-white: #1a1610;
+  --muted: #8a8078; --accent: #9a7530; --accent-dim: #7d6028;
+  --accent-glow: rgba(154,117,48,0.08); --red: #c45c4a; --green: #4a8a4a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: var(--sans); background: var(--bg); color: var(--text);
+  line-height: 1.6; -webkit-font-smoothing: antialiased; min-height: 100vh;
+}
+
+/* ── Login screen ── */
+.login-screen {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 2rem;
+}
+.login-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 3rem; width: 380px; max-width: 100%;
+}
+.login-card h1 {
+  font-size: 1.5rem; font-weight: 300; color: var(--text-white);
+  margin-bottom: 0.3rem;
+}
+.login-card h1 strong { font-weight: 700; color: var(--accent); }
+.login-card .sub { font-size: 0.8rem; color: var(--muted); margin-bottom: 2rem; }
+.login-card label {
+  display: block; font-family: var(--mono); font-size: 0.6rem;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
+  margin-bottom: 0.3rem; margin-top: 1rem;
+}
+.login-card label:first-of-type { margin-top: 0; }
+.field {
+  width: 100%; padding: 0.6rem 0.75rem;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text); font-family: var(--sans);
+  font-size: 0.9rem; outline: none; transition: border-color 0.2s;
+}
+.field:focus { border-color: var(--accent-dim); }
+.login-error {
+  font-size: 0.75rem; color: var(--red); margin-top: 0.5rem;
+  font-family: var(--mono); display: none;
+}
+.btn-primary {
+  width: 100%; padding: 0.65rem; margin-top: 1.5rem;
+  background: var(--accent-dim); border: none; border-radius: var(--radius);
+  color: #fff; font-family: var(--sans); font-size: 0.9rem; font-weight: 600;
+  cursor: pointer; transition: background 0.2s;
+}
+.btn-primary:hover { background: var(--accent); }
+
+/* ── Admin layout ── */
+.admin-app { display: none; }
+.admin-app.active { display: block; }
+.admin-header {
+  border-bottom: 1px solid var(--border);
+  padding: 1.25rem 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.admin-header h1 { font-size: 1.1rem; font-weight: 300; color: var(--text-white); }
+.admin-header h1 strong { font-weight: 700; color: var(--accent); }
+.admin-header-actions { display: flex; gap: 0.5rem; align-items: center; }
+.btn {
+  padding: 0.4rem 0.9rem; border-radius: var(--radius);
+  border: 1px solid var(--border); background: transparent; color: var(--muted);
+  font-family: var(--mono); font-size: 0.7rem; cursor: pointer;
+  transition: all 0.2s; letter-spacing: 0.03em; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 0.3rem;
+}
+.btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+.btn-danger { border-color: var(--red); color: var(--red); }
+.btn-danger:hover { background: rgba(196,92,74,0.1); }
+.btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+.admin-body {
+  max-width: 800px; margin: 0 auto; padding: 2rem;
+}
+
+/* Section cards */
+.section {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  margin-bottom: 1.5rem; overflow: hidden;
+}
+.section-header {
+  padding: 1rem 1.5rem; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.section-header h2 {
+  font-size: 0.9rem; font-weight: 600; color: var(--text-bright);
+}
+.section-header .badge {
+  font-family: var(--mono); font-size: 0.65rem;
+  padding: 0.15rem 0.5rem; border-radius: 100px;
+  background: var(--accent-glow); color: var(--accent-dim);
+}
+.section-body { padding: 1.5rem; }
+
+/* Form rows */
+.form-row { margin-bottom: 1.25rem; }
+.form-row:last-child { margin-bottom: 0; }
+.form-label {
+  display: block; font-family: var(--mono); font-size: 0.6rem;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+.form-help {
+  font-size: 0.7rem; color: var(--muted); margin-top: 0.25rem;
+  font-style: italic;
+}
+.form-row-inline { display: flex; gap: 1rem; }
+.form-row-inline .form-row { flex: 1; margin-bottom: 0; }
+.form-actions {
+  display: flex; gap: 0.5rem; justify-content: flex-end;
+  padding-top: 1rem; border-top: 1px solid var(--border); margin-top: 1rem;
+}
+.btn-save {
+  padding: 0.45rem 1.2rem; border-radius: var(--radius);
+  border: 1px solid var(--accent-dim); background: var(--accent-glow);
+  color: var(--accent); font-family: var(--mono); font-size: 0.72rem;
+  cursor: pointer; transition: all 0.2s; font-weight: 600;
+}
+.btn-save:hover { background: var(--accent-dim); color: #fff; }
+.btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Feed list */
+.feed-list { list-style: none; }
+.feed-item {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 0; border-bottom: 1px solid var(--border);
+}
+.feed-item:last-child { border-bottom: none; }
+.feed-info { flex: 1; min-width: 0; }
+.feed-title { font-size: 0.85rem; font-weight: 500; color: var(--text-bright); }
+.feed-url {
+  font-family: var(--mono); font-size: 0.62rem; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: block; max-width: 500px;
+}
+.feed-remove {
+  width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
+  border: 1px solid var(--border); background: transparent;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; color: var(--muted);
+}
+.feed-remove:hover { border-color: var(--red); color: var(--red); background: rgba(196,92,74,0.08); }
+.feed-remove svg { width: 14px; height: 14px; fill: currentColor; }
+
+.add-feed-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+.add-feed-row input { flex: 1; }
+
+/* Status toast */
+.status {
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(10px);
+  background: var(--card); border: 1px solid var(--accent-dim);
+  color: var(--text-bright); padding: 0.6rem 1.2rem; border-radius: 100px;
+  font-size: 0.8rem; opacity: 0; transition: all 0.3s; pointer-events: none;
+  z-index: 999; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.status.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .admin-body { padding: 1rem; }
+  .section-body { padding: 1rem; }
+  .form-row-inline { flex-direction: column; gap: 0; }
+  .form-row-inline .form-row { margin-bottom: 1.25rem; }
+  .admin-header { padding: 1rem; }
+  .feed-url { max-width: 200px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Login ── -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <h1 id="loginTitle">Seriously <strong>Photography</strong></h1>
+    <p class="sub">Admin access</p>
+    <label>Username</label>
+    <input type="text" class="field" id="loginUser" autocomplete="username">
+    <label>Password</label>
+    <input type="password" class="field" id="loginPass" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <p class="login-error" id="loginError"></p>
+    <button class="btn-primary" onclick="doLogin()">Sign in</button>
+  </div>
+</div>
+
+<!-- ── Admin app ── -->
+<div class="admin-app" id="adminApp">
+
+  <header class="admin-header">
+    <a href="/" style="text-decoration:none;color:inherit"><h1 id="headerTitle">Seriously <strong>Photography</strong></h1></a>
+    <div class="admin-header-actions">
+      <a href="/" class="btn">
+        <svg viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Back to site
+      </a>
+      <button class="btn btn-danger" onclick="doLogout()">Sign out</button>
+    </div>
+  </header>
+
+  <div class="admin-body">
+
+    <!-- Site Settings -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Site Settings</h2>
+      </div>
+      <div class="section-body">
+        <div class="form-row-inline">
+          <div class="form-row">
+            <label class="form-label">Title</label>
+            <input type="text" class="field" id="cfgTitle" placeholder="Seriously">
+            <p class="form-help">Displayed in regular weight</p>
+          </div>
+          <div class="form-row">
+            <label class="form-label">Title (accent)</label>
+            <input type="text" class="field" id="cfgAccent" placeholder="Photography">
+            <p class="form-help">Displayed in bold gold</p>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Tagline</label>
+          <input type="text" class="field" id="cfgTagline" placeholder="The best of photography...">
+        </div>
+        <div class="form-row-inline">
+          <div class="form-row">
+            <label class="form-label">Edition year</label>
+            <input type="text" class="field" id="cfgYear" placeholder="2026" style="max-width:120px">
+          </div>
+          <div class="form-row">
+            <label class="form-label">GA4 Measurement ID</label>
+            <input type="text" class="field" id="cfgGA" placeholder="G-XXXXXXXXXX">
+            <p class="form-help">Google Analytics 4 tracking code</p>
+          </div>
+        </div>
+        <div class="form-row-inline">
+          <div class="form-row">
+            <label class="form-label">Auto-refresh interval (minutes)</label>
+            <input type="number" class="field" id="cfgRefresh" placeholder="60" min="0" style="max-width:120px">
+            <p class="form-help">Set to 0 to disable.</p>
+          </div>
+          <div class="form-row">
+            <label class="form-label">RSS Feed URL</label>
+            <input type="text" class="field" id="cfgFeedUrl" placeholder="/feed">
+            <p class="form-help">Shows subscribe icon in sidebar. Leave empty to hide.</p>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-save" id="saveConfigBtn" onclick="saveConfig()">Save settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feeds -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Feeds</h2>
+        <span class="badge" id="feedBadge">0</span>
+      </div>
+      <div class="section-body">
+        <div class="add-feed-row">
+          <input type="url" class="field" id="addFeedUrl" placeholder="Paste RSS feed URL to add...">
+          <button class="btn-save" id="addFeedBtn" onclick="addFeed()">Add</button>
+          <label class="btn-save" style="cursor:pointer;display:inline-flex;align-items:center;gap:0.3rem" title="Import feeds from OPML file">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M4 22h14a2 2 0 002-2V7l-5-5H6a2 2 0 00-2 2v4"/><path d="M14 2v5h5M3 15h6m-3-3v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            OPML
+            <input type="file" accept=".opml,.xml" onchange="importOPML(this)" style="display:none">
+          </label>
+        </div>
+        <div id="opmlProgress" style="display:none;margin-bottom:1rem">
+          <div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted);margin-bottom:0.4rem" id="opmlStatus">Importing...</div>
+          <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+            <div id="opmlBar" style="height:100%;width:0%;background:var(--accent);transition:width 0.3s"></div>
+          </div>
+        </div>
+        <ul class="feed-list" id="feedList"></ul>
+        <div class="form-actions" style="margin-top:1.5rem">
+          <button class="btn" id="refreshBtn" onclick="refreshFeeds()">
+            <svg viewBox="0 0 24 24"><path d="M4 4v5h5M20 20v-5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20.49 9A9 9 0 005.64 5.64L4 9m16 6l-1.64 3.36A9 9 0 014.51 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Refresh all feeds
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="status" id="status"></div>
+
+<script>
+const _apiMap = {
+  '/api/data':'data','/api/config':'config','/api/feeds':'feeds',
+  '/api/add-feed':'add-feed','/api/remove-feed':'remove-feed',
+  '/api/refresh':'refresh','/api/refresh-batch':'refresh-batch',
+  '/api/auth/check':'auth-check','/api/auth/login':'auth-login','/api/auth/logout':'auth-logout',
+};
+function api(p){return location.port==='8420'?p:'/api.php?action='+(_apiMap[p]||p);}
+
+function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function toast(msg) {
+  const t=document.getElementById('status');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+/* ── Auth ── */
+async function checkAuth() {
+  try {
+    const r = await fetch(api('/api/auth/check'));
+    const d = await r.json();
+    if (d.authenticated) { showAdmin(); return; }
+  } catch(e) {}
+  showLogin();
+}
+
+function showLogin() {
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('adminApp').classList.remove('active');
+}
+function showAdmin() {
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('adminApp').classList.add('active');
+  loadConfig();
+  loadFeeds();
+}
+
+async function doLogin() {
+  const user=document.getElementById('loginUser').value.trim();
+  const pwd=document.getElementById('loginPass').value;
+  const err=document.getElementById('loginError');
+  if(!user||!pwd){err.textContent='Enter both fields';err.style.display='block';return;}
+  try {
+    const r=await fetch(api('/api/auth/login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:user,password:pwd})});
+    const d=await r.json();
+    if(d.ok){err.style.display='none';showAdmin();toast('Signed in');}
+    else{err.textContent=d.error||'Invalid credentials';err.style.display='block';}
+  }catch(e){err.textContent='Server not running';err.style.display='block';}
+}
+
+async function doLogout() {
+  try{await fetch(api('/api/auth/logout'),{method:'POST'});}catch(e){}
+  showLogin(); toast('Signed out');
+}
+
+/* ── Config ── */
+async function loadConfig() {
+  try {
+    const r=await fetch(api('/api/config')); const cfg=await r.json();
+    document.getElementById('cfgTitle').value=cfg.title||'';
+    document.getElementById('cfgAccent').value=cfg.title_accent||'';
+    document.getElementById('cfgTagline').value=cfg.tagline||'';
+    document.getElementById('cfgYear').value=cfg.year||'';
+    document.getElementById('cfgGA').value=cfg.ga_measurement_id||'';
+    document.getElementById('cfgRefresh').value=cfg.auto_refresh_minutes??60;
+    document.getElementById('cfgFeedUrl').value=cfg.feed_url||'';
+    // Update header titles
+    const t=esc(cfg.title)+' <strong>'+esc(cfg.title_accent)+'</strong>';
+    document.getElementById('headerTitle').innerHTML=t;
+    document.getElementById('loginTitle').innerHTML=t;
+    document.title=cfg.title+' '+cfg.title_accent+' — Admin';
+    if(cfg.ga_measurement_id&&!window._gaLoaded){
+      window._gaLoaded=true;
+      const s=document.createElement('script');s.async=true;
+      s.src='https://www.googletagmanager.com/gtag/js?id='+cfg.ga_measurement_id;
+      document.head.appendChild(s);
+      window.dataLayer=window.dataLayer||[];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js',new Date());gtag('config',cfg.ga_measurement_id);
+    }
+  }catch(e){}
+}
+
+async function saveConfig() {
+  const btn=document.getElementById('saveConfigBtn');
+  btn.disabled=true; btn.textContent='Saving...';
+  const payload={
+    title:document.getElementById('cfgTitle').value.trim(),
+    title_accent:document.getElementById('cfgAccent').value.trim(),
+    tagline:document.getElementById('cfgTagline').value.trim(),
+    year:document.getElementById('cfgYear').value.trim(),
+    ga_measurement_id:document.getElementById('cfgGA').value.trim(),
+    auto_refresh_minutes:parseInt(document.getElementById('cfgRefresh').value)||0,
+    feed_url:document.getElementById('cfgFeedUrl').value.trim(),
+  };
+  try {
+    const r=await fetch(api('/api/config'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const d=await r.json();
+    if(d.ok){
+      toast('Settings saved');
+      const t=esc(d.title)+' <strong>'+esc(d.title_accent)+'</strong>';
+      document.getElementById('headerTitle').innerHTML=t;
+      document.title=d.title+' '+d.title_accent+' — Admin';
+    }else toast('Error saving');
+  }catch(e){toast('Server error');}
+  btn.disabled=false; btn.textContent='Save settings';
+}
+
+/* ── Feeds ── */
+async function loadFeeds() {
+  try {
+    const r=await fetch(api('/api/feeds')); const feeds=await r.json();
+    document.getElementById('feedBadge').textContent=feeds.length;
+    const list=document.getElementById('feedList');
+    if(feeds.length===0){list.innerHTML='<li style="color:var(--muted);font-size:0.85rem;padding:1rem 0">No feeds added yet.</li>';return;}
+    list.innerHTML=feeds.map(f=>`<li class="feed-item">
+      <div class="feed-info">
+        <span class="feed-title">${esc(f.title)}</span>
+        <span class="feed-url">${esc(f.url)}</span>
+      </div>
+      <button class="feed-remove" onclick="removeFeed('${esc(f.url).replace(/'/g,"\\'")}')" title="Remove feed">
+        <svg viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </li>`).join('');
+  }catch(e){ toast('Failed to load feeds'); }
+}
+
+async function importOPML(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = ''; // reset for re-import
+
+  const text = await file.text();
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(text, 'text/xml');
+
+  // Extract all outline elements with xmlUrl
+  const outlines = xml.querySelectorAll('outline[xmlUrl]');
+  const feeds = [];
+  const seen = new Set();
+  outlines.forEach(o => {
+    const url = o.getAttribute('xmlUrl');
+    if (url && !seen.has(url)) {
+      seen.add(url);
+      feeds.push(url);
+    }
+  });
+
+  if (feeds.length === 0) {
+    toast('No feeds found in OPML file');
+    return;
+  }
+
+  // Show progress
+  const prog = document.getElementById('opmlProgress');
+  const bar = document.getElementById('opmlBar');
+  const status = document.getElementById('opmlStatus');
+  prog.style.display = 'block';
+
+  let added = 0, skipped = 0, failed = 0;
+
+  for (let i = 0; i < feeds.length; i++) {
+    const pct = Math.round(((i + 1) / feeds.length) * 100);
+    bar.style.width = pct + '%';
+    status.textContent = `Importing ${i + 1}/${feeds.length} — ${added} added, ${skipped} existing, ${failed} failed`;
+
+    try {
+      const r = await fetch(api('/api/add-feed'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: feeds[i] }),
+      });
+      const d = await r.json();
+      if (d.ok) added++;
+      else if (d.login_required) { toast('Session expired'); showLogin(); prog.style.display = 'none'; return; }
+      else skipped++; // likely already exists or unparseable
+    } catch (e) {
+      failed++;
+    }
+
+    // Small delay to avoid hammering
+    if (i < feeds.length - 1) await new Promise(r => setTimeout(r, 200));
+  }
+
+  status.textContent = `Done — ${added} added, ${skipped} skipped, ${failed} failed`;
+  toast(`Imported ${added} feeds from OPML`);
+  loadFeeds();
+
+  // Hide progress after 3s
+  setTimeout(() => { prog.style.display = 'none'; }, 3000);
+}
+
+async function addFeed() {
+  const input=document.getElementById('addFeedUrl');
+  const url=input.value.trim();
+  if(!url)return;
+  const btn=document.getElementById('addFeedBtn');
+  btn.disabled=true; btn.textContent='Adding...';
+  try {
+    const r=await fetch(api('/api/add-feed'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    const d=await r.json();
+    if(d.ok){input.value='';toast('Added: '+d.title);loadFeeds();}
+    else if(d.login_required){toast('Session expired');showLogin();}
+    else toast('Error: '+(d.error||'Failed'));
+  }catch(e){toast('Server error');}
+  btn.disabled=false; btn.textContent='Add';
+}
+
+async function removeFeed(url) {
+  try {
+    const r=await fetch(api('/api/remove-feed'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    const d=await r.json();
+    if(d.login_required){toast('Session expired');showLogin();return;}
+    if(d.removed){toast('Removed: '+d.title);loadFeeds();}
+    else toast('Feed not found');
+  }catch(e){toast('Server error');}
+}
+
+async function refreshFeeds() {
+  const btn=document.getElementById('refreshBtn');
+  btn.disabled=true;
+  await doBatchRefresh(0, btn);
+  btn.disabled=false;
+  btn.innerHTML='<svg viewBox="0 0 24 24"><path d="M4 4v5h5M20 20v-5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20.49 9A9 9 0 005.64 5.64L4 9m16 6l-1.64 3.36A9 9 0 014.51 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Refresh all feeds';
+}
+
+async function doBatchRefresh(offset, btn) {
+  try {
+    const url = api('/api/refresh-batch') + (api('/api/refresh-batch').includes('?') ? '&' : '?') + 'offset=' + offset;
+    const pct = btn ? '' : '';
+    btn.innerHTML='<svg viewBox="0 0 24 24" style="animation:spin 1s linear infinite"><path d="M4 4v5h5M20 20v-5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20.49 9A9 9 0 005.64 5.64L4 9m16 6l-1.64 3.36A9 9 0 014.51 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Refreshing...';
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.login_required) { toast('Session expired'); showLogin(); return; }
+    if (d.ok) {
+      const pct = Math.round((Math.min(d.offset, d.total) / d.total) * 100);
+      btn.innerHTML='<svg viewBox="0 0 24 24" style="animation:spin 1s linear infinite"><path d="M4 4v5h5M20 20v-5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20.49 9A9 9 0 005.64 5.64L4 9m16 6l-1.64 3.36A9 9 0 014.51 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> '+pct+'% ('+d.articles+' articles)';
+      if (!d.done) {
+        await new Promise(r => setTimeout(r, 200));
+        await doBatchRefresh(d.offset, btn);
+      } else {
+        toast(d.articles + ' articles from ' + d.sources + ' sources');
+        loadFeeds();
+      }
+    } else { toast('Refresh failed'); }
+  } catch(e) { toast('Server error: ' + e.message); }
+}
+
+/* Theme */
+function toggleTheme(){document.documentElement.classList.toggle('light');localStorage.setItem('sp-theme',document.documentElement.classList.contains('light')?'light':'dark');}
+
+/* Boot */
+checkAuth();
+</script>
+</body>
+</html>

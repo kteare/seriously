@@ -1,0 +1,32 @@
+RewriteEngine On
+
+# Serve index
+DirectoryIndex aggregated_feed.html
+
+# Route /admin to admin.html
+RewriteRule ^admin/?$ /admin.html [L]
+
+# Route /feed to Atom feed
+RewriteRule ^feed/?$ /api.php?action=feed [L]
+
+# Legacy WordPress — kill 404s for wp assets
+RewriteRule ^wp-content/ - [R=410,L]
+RewriteRule ^wp-admin/ - [R=410,L]
+RewriteRule ^wp-json/ - [R=410,L]
+RewriteRule ^wp-includes/ - [R=410,L]
+
+# Legacy WordPress URLs — redirect to filtered reader
+RewriteRule ^category/(.+?)/?$ /?q=$1 [R=301,L]
+RewriteRule ^author/(.+?)/?$ /?q=$1 [R=301,L]
+RewriteRule ^tag/(.+?)/?$ /?q=$1 [R=301,L]
+RewriteRule ^[0-9]{4}/[0-9]{2}/[0-9]{2}/(.+?)/?$ /?q=$1 [R=301,L]
+
+# Protect sensitive files from direct access
+<FilesMatch "\.(env|json|py|md)$">
+    Require all denied
+</FilesMatch>
+
+# Allow api.php to read JSON files
+<Files "api.php">
+    Require all granted
+</Files>

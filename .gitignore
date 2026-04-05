@@ -1,0 +1,6 @@
+.env
+feed_data.json
+feed_etags.json
+*.tmp
+*.lock
+__pycache__/

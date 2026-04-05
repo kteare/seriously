@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seriously Photography</title>
+<link rel="alternate" type="application/atom+xml" title="Feed" href="/feed">
+<!-- GA loaded dynamically from config -->
+<script>if(localStorage.getItem('sp-theme')==='light')document.documentElement.classList.add('light');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #151210;
+  --card: #1e1b18;
+  --border: #2e2a25;
+  --border-hover: #4a4035;
+  --text: #d8d0c8;
+  --text-bright: #f0ebe5;
+  --text-white: #ffffff;
+  --muted: #8a8078;
+  --accent: #c9a96e;
+  --accent-dim: #a07d45;
+  --accent-glow: rgba(201,169,110,0.08);
+  --red: #c45c4a;
+  --serif: 'Instrument Serif', Georgia, serif;
+  --sans: 'DM Sans', -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --radius: 6px;
+  --shadow: 0 2px 20px rgba(0,0,0,0.3);
+  --sidebar-bg: #19171400;
+  --sidebar-w: 280px;
+  --grain-opacity: 0.025;
+}
+html.light {
+  --bg: #f4f1ec;
+  --card: #ffffff;
+  --border: #ddd7ce;
+  --border-hover: #c5bdb2;
+  --text: #3d3830;
+  --text-bright: #1a1610;
+  --text-white: #1a1610;
+  --muted: #8a8078;
+  --accent: #9a7530;
+  --accent-dim: #7d6028;
+  --accent-glow: rgba(154,117,48,0.08);
+  --red: #c45c4a;
+  --shadow: 0 2px 16px rgba(0,0,0,0.08);
+  --sidebar-bg: #f4f1ec00;
+  --grain-opacity: 0.012;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--sans); background: var(--bg); color: var(--text);
+  line-height: 1.6; -webkit-font-smoothing: antialiased;
+}
+body::after {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 128px;
+}
+
+/* ══════════════════════════════════════
+   LAYOUT: sidebar + main
+   ══════════════════════════════════════ */
+.app { display: flex; min-height: 100vh; }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  position: fixed; top: 0; left: 0; bottom: 0;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow-y: auto; overflow-x: hidden;
+  z-index: 50;
+  background: var(--bg);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.sidebar-logo {
+  padding: 2rem 1.25rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo h1 {
+  font-family: var(--sans); font-size: 1.35rem; font-weight: 300;
+  color: var(--text-white); line-height: 1.15; letter-spacing: -0.01em;
+}
+.sidebar-logo h1 strong { font-weight: 700; color: var(--accent); }
+.sidebar-logo a, .mob-logo { text-decoration: none; color: inherit; cursor: pointer; }
+.sidebar-logo a h1 { margin: 0; }
+.sidebar-logo .tagline {
+  font-size: 0.72rem; color: var(--muted); margin-top: 0.35rem; line-height: 1.4;
+}
+
+.sidebar-stats {
+  display: flex; gap: 1rem; padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-stat { text-align: center; flex: 1; }
+.stat-num { font-family: var(--sans); font-size: 1.15rem; font-weight: 600; color: var(--text-bright); display: block; line-height: 1; }
+.stat-label { font-family: var(--mono); font-size: 0.52rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-top: 0.2rem; display: block; }
+
+/* Search */
+.search-box {
+  position: relative; display: flex; align-items: center;
+}
+.search-icon {
+  position: absolute; left: 0.65rem; width: 15px; height: 15px;
+  pointer-events: none; opacity: 0.4;
+}
+.search-input {
+  width: 100%; padding: 0.55rem 2rem 0.55rem 2.1rem;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text); font-family: var(--sans);
+  font-size: 0.82rem; outline: none; transition: border-color 0.2s;
+}
+.search-input:focus { border-color: var(--accent-dim); }
+.search-input::placeholder { color: var(--muted); }
+.search-clear {
+  position: absolute; right: 0.5rem;
+  background: none; border: none; color: var(--muted); font-size: 1.1rem;
+  cursor: pointer; line-height: 1; padding: 0.2rem;
+  transition: color 0.15s;
+}
+.search-clear:hover { color: var(--text); }
+
+/* Sidebar filters */
+.sidebar-section {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-section:last-child { border-bottom: none; }
+.sidebar-label {
+  font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; display: block;
+}
+.sidebar-section select,
+.sidebar-section input[type="date"] {
+  width: 100%; padding: 0.45rem 0.6rem;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text); font-family: var(--sans);
+  font-size: 0.8rem; outline: none; transition: border-color 0.2s;
+  -webkit-appearance: none; appearance: none;
+}
+.sidebar-section select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%238a8078' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 0.6rem center; padding-right: 1.8rem; cursor: pointer;
+}
+html.light .sidebar-section select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%233d3830' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+}
+.sidebar-section select:focus,
+.sidebar-section input:focus { border-color: var(--accent-dim); }
+.sidebar-section input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor: pointer; }
+html.light .sidebar-section input[type="date"]::-webkit-calendar-picker-indicator { filter: none; }
+.date-row { display: flex; gap: 0.5rem; }
+.date-row input { flex: 1; min-width: 0; }
+.filter-group { margin-bottom: 0.75rem; }
+.filter-group:last-child { margin-bottom: 0; }
+
+/* Tags */
+.tags-toggle {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  padding: 0.25rem 0.6rem; border-radius: 100px; font-size: 0.62rem;
+  font-family: var(--mono); cursor: pointer; transition: all 0.2s;
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.tags-toggle:hover { border-color: var(--accent-dim); color: var(--accent); }
+.tags-toggle.open { border-color: var(--accent-dim); color: var(--accent); }
+.tags-toggle svg { width: 8px; height: 8px; fill: currentColor; transition: transform 0.25s; }
+.tags-toggle.open svg { transform: rotate(180deg); }
+.tags-row {
+  display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.5rem;
+  max-height: 0; overflow: hidden; opacity: 0;
+  transition: max-height 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.3s;
+}
+.tags-row.open { max-height: 500px; opacity: 1; }
+.tag-chip {
+  padding: 0.2rem 0.5rem; border-radius: 100px; font-size: 0.62rem;
+  font-family: var(--mono); border: 1px solid var(--border); color: var(--muted);
+  cursor: pointer; transition: all 0.2s; background: transparent;
+}
+.tag-chip:hover { border-color: var(--accent-dim); color: var(--text); }
+.tag-chip.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+
+/* Active filter pills */
+.active-filters { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
+.active-filters:empty { margin-top: 0; }
+.filter-pill {
+  display: inline-flex; align-items: center; gap: 0.25rem;
+  background: var(--accent-glow); border: 1px solid rgba(201,169,110,0.2);
+  border-radius: 100px; padding: 0.15rem 0.5rem; font-size: 0.6rem;
+  font-family: var(--mono); color: var(--accent);
+}
+.filter-pill .pill-x { cursor: pointer; opacity: 0.6; transition: opacity 0.15s; font-size: 0.75rem; }
+.filter-pill .pill-x:hover { opacity: 1; }
+
+/* Sidebar footer */
+.sidebar-footer {
+  margin-top: auto;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.sidebar-footer .filter-count {
+  font-family: var(--mono); font-size: 0.62rem; color: var(--muted); letter-spacing: 0.03em;
+}
+.sidebar-footer .filter-count strong { color: var(--accent); font-weight: 400; }
+.sidebar-actions {
+  display: flex; gap: 0.35rem; margin-left: auto;
+}
+.icon-btn {
+  width: 30px; height: 30px; border-radius: 6px;
+  border: 1px solid var(--border); background: transparent;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; color: var(--muted);
+}
+.icon-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+.icon-btn svg { width: 14px; height: 14px; fill: currentColor; }
+.icon-btn.refreshing svg { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Main content ── */
+.main {
+  flex: 1; margin-left: var(--sidebar-w);
+  min-height: 100vh;
+}
+.feed-scroll {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 2rem 6rem;
+}
+
+/* ── Article cards — single column ── */
+article {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; margin-bottom: 1.5rem;
+  transition: border-color 0.3s, box-shadow 0.35s;
+  opacity: 0; animation: fadeUp 0.4s ease forwards;
+}
+article:hover { border-color: var(--border-hover); box-shadow: var(--shadow); }
+.article-image { width: 100%; max-height: 420px; overflow: hidden; position: relative; background: var(--border); }
+.article-image img {
+  width: 100%; display: block; object-fit: cover; max-height: 420px;
+  transition: transform 0.6s cubic-bezier(0.16,1,0.3,1);
+}
+article:hover .article-image img { transform: scale(1.03); }
+.article-image::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.15) 100%);
+  pointer-events: none;
+}
+.article-body { padding: 1.5rem 1.75rem 1.75rem; }
+h2 { font-family: var(--serif); font-size: 1.5rem; font-weight: 400; line-height: 1.25; margin-bottom: 0.5rem; }
+h2 a { color: var(--text-bright); text-decoration: none; transition: color 0.2s; }
+h2 a:hover { color: var(--accent); }
+.meta {
+  font-size: 0.75rem; color: var(--muted); margin-bottom: 0.6rem;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem;
+}
+.meta a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+.meta a:hover { color: var(--accent); }
+.meta .sep { opacity: 0.3; font-size: 0.55rem; }
+.meta .author a { color: var(--text); font-weight: 500; }
+.meta .pub {
+  font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.03em;
+  text-transform: uppercase; padding: 0.15rem 0.5rem;
+  background: var(--accent-glow); border-radius: 3px; color: var(--accent-dim);
+  transition: background 0.2s, color 0.2s;
+}
+.meta .pub:hover { color: var(--accent); }
+.article-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.6rem; }
+.article-tag {
+  font-family: var(--mono); font-size: 0.58rem;
+  padding: 0.1rem 0.45rem; border-radius: 3px;
+  background: rgba(255,255,255,0.04); color: var(--muted);
+}
+html.light .article-tag { background: rgba(0,0,0,0.04); }
+.article-media { margin-bottom: 0.75rem; }
+.article-media audio { width: 100%; height: 40px; border-radius: 4px; }
+.article-media video { max-height: 400px; }
+.summary {
+  color: var(--muted); font-size: 0.9rem; line-height: 1.65;
+  margin-bottom: 0;
+}
+
+/* Share bar — inline at bottom */
+.share-bar {
+  display: flex; gap: 0.35rem; padding-top: 1rem; margin-top: 1rem;
+  border-top: 1px solid var(--border);
+  opacity: 0; transform: translateY(4px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+article:hover .share-bar { opacity: 1; transform: translateY(0); }
+@media (hover: none) { .share-bar { opacity: 1; transform: none; } }
+.share-bar button {
+  width: 30px; height: 30px; border-radius: 6px;
+  border: 1px solid var(--border); background: transparent;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.share-bar button:hover { background: var(--accent-glow); border-color: var(--accent-dim); }
+.share-bar button svg { width: 13px; height: 13px; fill: var(--muted); transition: fill 0.2s; }
+.share-bar button:hover svg { fill: var(--accent); }
+
+/* No results */
+.no-results { text-align: center; padding: 5rem 2rem; }
+.no-results h3 { font-family: var(--serif); font-size: 1.5rem; color: var(--text-bright); margin-bottom: 0.5rem; }
+.no-results p { color: var(--muted); font-size: 0.9rem; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 2rem; left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--card); border: 1px solid var(--accent-dim);
+  color: var(--text-bright); padding: 0.7rem 1.25rem; border-radius: 100px;
+  font-size: 0.8rem; opacity: 0; transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none; z-index: 999; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Admin overlay */
+.admin-overlay {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+}
+.admin-overlay.open { display: flex; align-items: center; justify-content: center; }
+.admin-panel {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 2rem; width: 480px; max-width: 90vw; max-height: 80vh; overflow-y: auto;
+}
+.admin-panel h3 {
+  font-family: var(--sans); font-size: 1rem; font-weight: 600;
+  color: var(--text-bright); margin-bottom: 1.25rem;
+}
+.admin-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+.admin-row input {
+  flex: 1; padding: 0.5rem 0.75rem;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text); font-family: var(--sans);
+  font-size: 0.85rem; outline: none;
+}
+.admin-row input::placeholder { color: var(--muted); }
+.admin-row input:focus { border-color: var(--accent-dim); }
+.admin-btn {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  padding: 0.5rem 1rem; border-radius: var(--radius); font-size: 0.75rem;
+  font-family: var(--mono); cursor: pointer; transition: all 0.2s;
+  white-space: nowrap;
+}
+.admin-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+.admin-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.admin-close {
+  position: absolute; top: 1rem; right: 1rem;
+  background: none; border: none; color: var(--muted); font-size: 1.5rem;
+  cursor: pointer; line-height: 1;
+}
+.admin-close:hover { color: var(--text); }
+
+/* Mobile sidebar toggle */
+.mobile-bar {
+  display: none;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  padding: 0 1rem; height: 52px; align-items: center; justify-content: space-between;
+}
+.mobile-bar .mob-logo { font-family: var(--sans); font-size: 1rem; font-weight: 300; color: var(--text-white); }
+.mobile-bar .mob-logo strong { font-weight: 700; color: var(--accent); }
+.mob-btn {
+  width: 36px; height: 36px; border-radius: 6px;
+  border: 1px solid var(--border); background: transparent;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--muted);
+}
+.mob-btn svg { width: 18px; height: 18px; fill: currentColor; }
+.sidebar-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 45;
+  background: rgba(0,0,0,0.4);
+}
+
+@keyframes fadeUp { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+
+/* ── Responsive ── */
+@media (max-width: 840px) {
+  .mobile-bar { display: flex; }
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
+    z-index: 55;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-backdrop.open { display: block; }
+  .main { margin-left: 0; padding-top: 52px; }
+  .feed-scroll { padding: 1rem 0.75rem 4rem; }
+  h2 { font-size: 1.25rem; }
+  .article-body { padding: 1.25rem; }
+}
+@media (max-width: 480px) {
+  .sidebar { width: 85vw; }
+  h2 { font-size: 1.1rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Mobile top bar -->
+<div class="mobile-bar">
+  <button class="mob-btn" onclick="toggleSidebar()" title="Menu">
+    <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+  <a href="/" class="mob-logo" id="mobLogo" onclick="clearFilters();window.scrollTo(0,0);return false;">Seriously <strong>Photography</strong></a>
+  <button class="mob-btn" onclick="toggleTheme()" title="Toggle theme">
+    <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
+    <svg class="icon-sun" viewBox="0 0 24 24"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zm11.394-5.834a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zm-3.856 6.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zm-7.894-1.166a.75.75 0 00-1.06 1.06l1.59 1.591a.75.75 0 001.06-1.06l-1.59-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zm.166-7.894a.75.75 0 00-1.06-1.06L3.515 4.636a.75.75 0 001.06 1.06L6.166 4.107z"/></svg>
+  </button>
+</div>
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
+
+<div class="app">
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar" id="sidebar">
+
+  <div class="sidebar-logo">
+    <a href="/" id="siteTitle" onclick="clearFilters();window.scrollTo(0,0);return false;"><h1>Seriously <strong>Photography</strong></h1></a>
+    <p class="tagline" id="siteTagline">The best of photography &amp; filmmaking, curated daily.</p>
+  </div>
+
+  <div class="sidebar-stats">
+    <div class="sidebar-stat"><span class="stat-num" id="statStories">--</span><span class="stat-label">Stories</span></div>
+    <div class="sidebar-stat"><span class="stat-num" id="statSources">--</span><span class="stat-label">Sources</span></div>
+  </div>
+
+  <div class="sidebar-section" style="padding-bottom:0.75rem">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24"><path d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search articles..." oninput="render()">
+      <button class="search-clear" id="searchClear" onclick="document.getElementById('searchInput').value='';render()" style="display:none">&times;</button>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="filter-group">
+      <span class="sidebar-label">Publication</span>
+      <select id="filterPub"><option value="">All publications</option></select>
+    </div>
+    <div class="filter-group">
+      <span class="sidebar-label">Author</span>
+      <select id="filterAuthor"><option value="">All authors</option></select>
+    </div>
+    <div class="filter-group">
+      <span class="sidebar-label">Date range</span>
+      <div class="date-row">
+        <input type="date" id="filterDateFrom">
+        <input type="date" id="filterDateTo">
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <button class="tags-toggle" id="tagsToggle" onclick="toggleTags()">
+      Tags <svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg>
+    </button>
+    <div class="tags-row" id="tagsRow"></div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="active-filters" id="activePills"></div>
+  </div>
+
+  <div class="sidebar-footer">
+    <span class="filter-count">Showing <strong id="filterCountNum">--</strong></span>
+    <div class="sidebar-actions">
+      <a class="icon-btn" id="rssBtnSidebar" href="/feed" target="_blank" title="Subscribe via RSS" style="display:none">
+        <svg viewBox="0 0 24 24"><circle cx="6.18" cy="17.82" r="2.18" fill="currentColor"/><path d="M4 4.44v2.83c7.03 0 12.73 5.7 12.73 12.73h2.83c0-8.59-6.97-15.56-15.56-15.56zm0 5.66v2.83c3.9 0 7.07 3.17 7.07 7.07h2.83c0-5.47-4.43-9.9-9.9-9.9z" fill="currentColor"/></svg>
+      </a>
+      <button class="icon-btn" onclick="clearFilters()" title="Clear filters">
+        <svg viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="icon-btn" id="refreshBtn" onclick="refreshFeeds()" title="Refresh feeds">
+        <svg viewBox="0 0 24 24"><path d="M4 4v5h5M20 20v-5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20.49 9A9 9 0 005.64 5.64L4 9m16 6l-1.64 3.36A9 9 0 014.51 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="icon-btn" onclick="openAdmin()" title="Manage feeds">
+        <svg viewBox="0 0 24 24"><path d="M12 4v16m-8-8h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zm11.394-5.834a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75z"/></svg>
+      </button>
+    </div>
+  </div>
+
+</aside>
+
+<!-- ── Main feed ── -->
+<main class="main">
+  <div class="feed-scroll" id="feedGrid"></div>
+</main>
+
+</div><!-- /app -->
+
+<!-- Admin overlay -->
+<div class="admin-overlay" id="adminOverlay" onclick="if(event.target===this)closeAdmin()">
+  <div class="admin-panel" style="position:relative">
+    <button class="admin-close" onclick="closeAdmin()">&times;</button>
+
+    <!-- Login form -->
+    <div id="adminLogin">
+      <h3>Admin Login</h3>
+      <div class="admin-row">
+        <input type="text" id="adminUser" placeholder="Username" autocomplete="username">
+      </div>
+      <div class="admin-row">
+        <input type="password" id="adminPass" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="admin-row">
+        <button class="admin-btn" onclick="doLogin()" style="flex:1">Sign in</button>
+      </div>
+      <p id="loginError" style="font-family:var(--mono);font-size:0.7rem;color:var(--red);display:none;"></p>
+    </div>
+
+    <!-- Authenticated admin panel -->
+    <div id="adminPanel" style="display:none">
+      <h3>Manage Feeds</h3>
+      <div class="admin-row">
+        <input type="url" id="addFeedUrl" placeholder="Paste RSS feed URL...">
+        <button class="admin-btn" id="addFeedBtn" onclick="addFeed()">Add feed</button>
+      </div>
+      <p id="sourceCount" style="font-family:var(--mono);font-size:0.7rem;color:var(--muted);letter-spacing:0.03em;margin-bottom:1rem;"></p>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="admin-btn" onclick="doLogout()" style="border-color:var(--red);color:var(--red)">Sign out</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// API routing: api.php on production, direct paths on local Python server
+const _apiMap = {
+  '/api/data':'data','/api/config':'config','/api/feeds':'feeds',
+  '/api/add-feed':'add-feed','/api/remove-feed':'remove-feed',
+  '/api/refresh':'refresh','/api/auth/check':'auth-check',
+  '/api/refresh-batch':'refresh-batch','/api/auth/login':'auth-login','/api/auth/logout':'auth-logout',
+};
+function api(p){return location.port==='8420'?p:'/api.php?action='+(_apiMap[p]||p);}
+
+let DATA = null;
+let activeTags = new Set();
+
+const SVG = {
+  x: '<svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+  fb: '<svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>',
+  li: '<svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>',
+  ig: '<svg viewBox="0 0 24 24"><path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z"/></svg>',
+  mail: '<svg viewBox="0 0 24 24"><path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z"/><path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z"/></svg>'
+};
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function populateFilters() {
+  const pubSel = document.getElementById('filterPub');
+  const authSel = document.getElementById('filterAuthor');
+  pubSel.length = 1; authSel.length = 1;
+  DATA.publications.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; pubSel.appendChild(o); });
+  DATA.authors.forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; authSel.appendChild(o); });
+
+  const tagsRow = document.getElementById('tagsRow');
+  tagsRow.innerHTML = '';
+  DATA.tags.forEach(tag => {
+    const chip = document.createElement('button');
+    chip.className = 'tag-chip' + (activeTags.has(tag) ? ' active' : '');
+    chip.textContent = tag;
+    chip.onclick = () => {
+      if (activeTags.has(tag)) { activeTags.delete(tag); chip.classList.remove('active'); }
+      else { activeTags.add(tag); chip.classList.add('active');
+        document.getElementById('tagsRow').classList.add('open');
+        document.getElementById('tagsToggle').classList.add('open');
+      }
+      render();
+    };
+    chip.dataset.tag = tag;
+    tagsRow.appendChild(chip);
+  });
+
+  if (DATA.articles.length) {
+    const dates = DATA.articles.map(a => a.date.slice(0,10));
+    document.getElementById('filterDateFrom').min = dates[dates.length-1];
+    document.getElementById('filterDateFrom').max = dates[0];
+    document.getElementById('filterDateTo').min = dates[dates.length-1];
+    document.getElementById('filterDateTo').max = dates[0];
+  }
+  const nFeeds = DATA.feeds ? Object.keys(DATA.feeds).length : DATA.publications.length;
+  document.getElementById('sourceCount').textContent = nFeeds + ' feeds subscribed';
+  document.getElementById('statSources').textContent = nFeeds;
+}
+
+document.getElementById('filterPub').addEventListener('change', render);
+document.getElementById('filterAuthor').addEventListener('change', render);
+document.getElementById('filterDateFrom').addEventListener('change', render);
+document.getElementById('filterDateTo').addEventListener('change', render);
+
+function getFilters() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  document.getElementById('searchClear').style.display = q ? 'block' : 'none';
+  return {
+    q,
+    pub: document.getElementById('filterPub').value,
+    author: document.getElementById('filterAuthor').value,
+    dateFrom: document.getElementById('filterDateFrom').value,
+    dateTo: document.getElementById('filterDateTo').value,
+    tags: activeTags,
+  };
+}
+
+function clearFilters() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('filterPub').value = '';
+  document.getElementById('filterAuthor').value = '';
+  document.getElementById('filterDateFrom').value = '';
+  document.getElementById('filterDateTo').value = '';
+  activeTags.clear();
+  document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
+  render();
+}
+
+function renderPills(f) {
+  const box = document.getElementById('activePills');
+  box.innerHTML = '';
+  const add = (label, onClear) => {
+    const pill = document.createElement('span');
+    pill.className = 'filter-pill';
+    pill.innerHTML = esc(label) + ' <span class="pill-x">&times;</span>';
+    pill.querySelector('.pill-x').onclick = onClear;
+    box.appendChild(pill);
+  };
+  if (f.q) add('"' + f.q + '"', () => { document.getElementById('searchInput').value = ''; render(); });
+  if (f.pub) add(f.pub, () => { document.getElementById('filterPub').value = ''; render(); });
+  if (f.author) add(f.author, () => { document.getElementById('filterAuthor').value = ''; render(); });
+  if (f.dateFrom) add('From ' + f.dateFrom, () => { document.getElementById('filterDateFrom').value = ''; render(); });
+  if (f.dateTo) add('To ' + f.dateTo, () => { document.getElementById('filterDateTo').value = ''; render(); });
+  f.tags.forEach(tag => {
+    add('#' + tag, () => {
+      activeTags.delete(tag);
+      const chip = document.querySelector(`.tag-chip[data-tag="${CSS.escape(tag)}"]`);
+      if (chip) chip.classList.remove('active');
+      render();
+    });
+  });
+}
+
+function buildCard(a, idx) {
+  const authorHtml = a.author
+    ? `<span class="author">By <a href="${esc(a.pub_url)}" target="_blank" rel="noopener">${esc(a.author)}</a></span><span class="sep">&middot;</span>`
+    : '';
+  const imgHtml = a.image
+    ? `<div class="article-image"><img src="${esc(a.image)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`
+    : '';
+  const tagsHtml = a.tags.length
+    ? `<div class="article-tags">${a.tags.slice(0,4).map(t => `<span class="article-tag">${esc(t)}</span>`).join('')}</div>`
+    : '';
+  let mediaHtml = '';
+  if (a.enclosure_url) {
+    const t = a.enclosure_type || '';
+    if (t.startsWith('audio')) {
+      mediaHtml = `<div class="article-media"><audio controls preload="none" src="${esc(a.enclosure_url)}"></audio></div>`;
+    } else if (t.startsWith('video')) {
+      mediaHtml = `<div class="article-media"><video controls preload="none" src="${esc(a.enclosure_url)}" style="width:100%;border-radius:4px"></video></div>`;
+    }
+  }
+  const eu = esc(a.link);
+  const et = esc(a.title);
+  return `<article style="animation-delay:${Math.min(idx * 0.03, 0.4)}s">
+  ${imgHtml}
+  <div class="article-body">
+    <h2><a href="${eu}" target="_blank" rel="noopener">${et}</a></h2>
+    <div class="meta">
+      ${authorHtml}
+      <a href="${esc(a.pub_url)}" class="pub" target="_blank" rel="noopener">${esc(a.publication)}</a>
+      <span class="sep">&middot;</span>
+      <time>${esc(a.date_str)}</time>
+    </div>
+    ${tagsHtml}
+    ${mediaHtml}
+    <p class="summary">${esc(a.summary)}</p>
+    <div class="share-bar">
+      <button onclick="shareX(this)" data-url="${eu}" data-title="${et}" title="Share on X">${SVG.x}</button>
+      <button onclick="shareFB(this)" data-url="${eu}" title="Share on Facebook">${SVG.fb}</button>
+      <button onclick="shareLI(this)" data-url="${eu}" data-title="${et}" title="Share on LinkedIn">${SVG.li}</button>
+      <button onclick="shareIG(this)" data-url="${eu}" title="Copy link for Instagram">${SVG.ig}</button>
+      <button onclick="shareEmail(this)" data-url="${eu}" data-title="${et}" title="Share via Email">${SVG.mail}</button>
+    </div>
+  </div>
+</article>`;
+}
+
+function render() {
+  if (!DATA) return;
+  const f = getFilters();
+  const filtered = DATA.articles.filter(a => {
+    if (f.q) {
+      const haystack = (a.title + ' ' + a.summary + ' ' + a.author + ' ' + a.publication + ' ' + a.tags.join(' ')).toLowerCase();
+      const words = f.q.split(/\s+/);
+      for (const w of words) { if (!haystack.includes(w)) return false; }
+    }
+    if (f.pub && a.publication !== f.pub) return false;
+    if (f.author && a.author !== f.author) return false;
+    const d = a.date.slice(0,10);
+    if (f.dateFrom && d < f.dateFrom) return false;
+    if (f.dateTo && d > f.dateTo) return false;
+    if (f.tags.size > 0) {
+      const lower = a.tags.map(t => t.toLowerCase());
+      for (const tag of f.tags) { if (!lower.includes(tag.toLowerCase())) return false; }
+    }
+    return true;
+  });
+  const grid = document.getElementById('feedGrid');
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="no-results"><h3>No stories match</h3><p>Try adjusting your filters.</p></div>';
+  } else {
+    grid.innerHTML = filtered.map((a, i) => buildCard(a, i)).join('\n');
+  }
+  document.getElementById('filterCountNum').textContent = filtered.length;
+  document.getElementById('statStories').textContent = filtered.length;
+  renderPills(f);
+}
+
+function toggleTags() {
+  document.getElementById('tagsRow').classList.toggle('open');
+  document.getElementById('tagsToggle').classList.toggle('open');
+}
+
+/* Share */
+function enc(s) { return encodeURIComponent(s); }
+function getD(btn) { return { url: btn.dataset.url, title: btn.dataset.title || '' }; }
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+function shareX(btn) { const d=getD(btn); window.open('https://x.com/intent/tweet?url='+enc(d.url)+'&text='+enc(d.title),'_blank','width=550,height=420'); }
+function shareFB(btn) { const d=getD(btn); window.open('https://www.facebook.com/sharer/sharer.php?u='+enc(d.url),'_blank','width=550,height=420'); }
+function shareLI(btn) { const d=getD(btn); window.open('https://www.linkedin.com/sharing/share-offsite/?url='+enc(d.url),'_blank','width=550,height=420'); }
+function shareIG(btn) { navigator.clipboard.writeText(btn.dataset.url).then(()=>{ toast('Link copied \u2014 paste into Instagram'); }); }
+function shareEmail(btn) { const d=getD(btn); window.location.href='mailto:?subject='+enc(d.title)+'&body='+enc(d.title+'\n\n'+d.url); }
+
+/* Admin auth */
+let isAdmin = false;
+
+async function checkAuth() {
+  try {
+    const res = await fetch(api('/api/auth/check'));
+    const data = await res.json();
+    isAdmin = data.authenticated;
+  } catch (e) { isAdmin = false; }
+  updateAdminUI();
+}
+
+function updateAdminUI() {
+  document.getElementById('adminLogin').style.display = isAdmin ? 'none' : 'block';
+  document.getElementById('adminPanel').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('loginError').style.display = 'none';
+}
+
+function openAdmin() {
+  document.getElementById('adminOverlay').classList.add('open');
+  checkAuth();
+}
+function closeAdmin() {
+  document.getElementById('adminOverlay').classList.remove('open');
+}
+
+async function doLogin() {
+  const user = document.getElementById('adminUser').value.trim();
+  const pwd = document.getElementById('adminPass').value;
+  if (!user || !pwd) return;
+  try {
+    const res = await fetch(api('/api/auth/login'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, password: pwd }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      isAdmin = true;
+      updateAdminUI();
+      document.getElementById('adminPass').value = '';
+      toast('Signed in');
+    } else {
+      const err = document.getElementById('loginError');
+      err.textContent = data.error || 'Invalid credentials';
+      err.style.display = 'block';
+    }
+  } catch (e) { toast('Server not running'); }
+}
+
+async function doLogout() {
+  try { await fetch(api('/api/auth/logout'), { method: 'POST' }); } catch (e) {}
+  isAdmin = false;
+  updateAdminUI();
+  toast('Signed out');
+}
+
+async function addFeed() {
+  const input = document.getElementById('addFeedUrl');
+  const url = input.value.trim();
+  if (!url) return;
+  const btn = document.getElementById('addFeedBtn');
+  btn.disabled = true; btn.textContent = 'Adding...';
+  try {
+    const res = await fetch(api('/api/add-feed'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const data = await res.json();
+    if (data.login_required) { toast('Sign in first'); openAdmin(); }
+    else if (data.ok) { input.value = ''; toast('Added: ' + data.title); }
+    else toast('Error: ' + (data.error || 'Failed'));
+  } catch (e) { toast('Server not running'); }
+  btn.disabled = false; btn.textContent = 'Add feed';
+}
+
+async function refreshFeeds() {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true; btn.classList.add('refreshing');
+  try {
+    const res = await fetch(api('/api/refresh'), { method: 'POST' });
+    const result = await res.json();
+    if (result.login_required) { toast('Sign in to refresh'); openAdmin(); }
+    else if (result.ok) { toast(result.articles + ' articles from ' + result.sources + ' sources'); await loadData(); }
+    else toast('Refresh failed');
+  } catch (e) { toast('Server not running'); }
+  btn.disabled = false; btn.classList.remove('refreshing');
+}
+
+/* Sidebar toggle (mobile) */
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarBackdrop').classList.toggle('open');
+}
+
+/* Theme */
+function toggleTheme() {
+  document.documentElement.classList.toggle('light');
+  localStorage.setItem('sp-theme', document.documentElement.classList.contains('light') ? 'light' : 'dark');
+}
+if (localStorage.getItem('sp-theme') === 'light') document.documentElement.classList.add('light');
+
+/* Theme icon visibility */
+const style = document.createElement('style');
+style.textContent = '.icon-sun{display:none}html.light .icon-moon{display:none}html.light .icon-sun{display:block}';
+document.head.appendChild(style);
+
+/* Load config + data */
+async function loadConfig() {
+  try {
+    const res = await fetch(api('/api/config'));
+    const cfg = await res.json();
+    const logoHtml = esc(cfg.title) + ' <strong>' + esc(cfg.title_accent) + '</strong>';
+    document.getElementById('siteTitle').querySelector('h1').innerHTML = logoHtml;
+    document.getElementById('mobLogo').innerHTML = logoHtml;
+    document.getElementById('siteTagline').textContent = cfg.tagline;
+    document.title = cfg.title + ' ' + cfg.title_accent;
+    // GA4 — load dynamically from config
+    if (cfg.ga_measurement_id && !window._gaLoaded) {
+      window._gaLoaded = true;
+      const s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=' + cfg.ga_measurement_id;
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){ dataLayer.push(arguments); }
+      gtag('js', new Date());
+      gtag('config', cfg.ga_measurement_id);
+    }
+    // RSS subscribe button
+    const rssBtn = document.getElementById('rssBtnSidebar');
+    if (cfg.feed_url) {
+      rssBtn.href = cfg.feed_url;
+      rssBtn.style.display = 'flex';
+    } else {
+      rssBtn.style.display = 'none';
+    }
+  } catch (e) {}
+}
+async function loadData() {
+  try {
+    const res = await fetch(api('/api/data'));
+    DATA = await res.json();
+    populateFilters(); render();
+    // If data is stale, run batched background refresh
+    if (res.headers.get('X-Feed-Stale') === 'true') {
+      batchRefresh(0);
+    }
+  } catch (e) {
+    if (window._EMBEDDED_DATA) { DATA = window._EMBEDDED_DATA; populateFilters(); render(); }
+    else { document.getElementById('feedGrid').innerHTML = '<div class="no-results"><h3>No data available</h3><p>Go to <a href="/admin" style="color:var(--accent)">/admin</a> and click Refresh to fetch feeds.</p></div>'; }
+  }
+}
+
+// Batched background refresh: 10 feeds per request, chains until done
+async function batchRefresh(offset) {
+  try {
+    const url = api('/api/refresh-batch') + (api('/api/refresh-batch').includes('?') ? '&' : '?') + 'offset=' + offset;
+    const res = await fetch(url);
+    const result = await res.json();
+    if (result.ok && !result.done) {
+      // Keep going — chain next batch
+      setTimeout(() => batchRefresh(result.offset), 200);
+    } else if (result.ok && result.done) {
+      // All done — reload fresh data
+      const res2 = await fetch(api('/api/data'));
+      DATA = await res2.json();
+      populateFilters(); render();
+    }
+  } catch (e) { /* silent fail — existing data stays */ }
+}
+// Apply URL search param (from legacy /category/X/ or /author/X/ redirects)
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const q = params.get('q');
+  if (q) {
+    // Convert slug to readable: "bezos-expeditions" → "bezos expeditions"
+    document.getElementById('searchInput').value = q.replace(/-/g, ' ');
+  }
+})();
+
+loadConfig();
+loadData();
+</script>
+</body>
+</html>
