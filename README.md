@@ -8,7 +8,7 @@ A self-hosted RSS aggregator with a beautiful reader UI, full-text search, socia
 
 ## Features
 
-- **Reader** — sidebar layout with single-column feed, dark/light theme toggle
+- **Reader** — sidebar layout with single-column feed, pagination, dark/light theme toggle
 - **Search** — full-text search across titles, summaries, authors, tags
 - **Filters** — by publication, author, date range, and tags
 - **Social sharing** — X, Facebook, LinkedIn, Instagram (copy link), Email

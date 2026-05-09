@@ -230,10 +230,11 @@ html.light .sidebar-section input[type="date"]::-webkit-calendar-picker-indicato
 /* ── Main content ── */
 .main {
   flex: 1; margin-left: var(--sidebar-w);
-  min-height: 100vh;
+  min-height: 100vh; min-width: 0;
 }
 .feed-scroll {
   max-width: 720px;
+  width: 100%;
   margin: 0 auto;
   padding: 2rem 2rem 6rem;
 }
@@ -289,6 +290,54 @@ html.light .article-tag { background: rgba(0,0,0,0.04); }
 .summary {
   color: var(--muted); font-size: 0.9rem; line-height: 1.65;
   margin-bottom: 0;
+}
+
+/* Pagination */
+.feed-toolbar,
+.pagination {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.feed-toolbar {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--card);
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+}
+.feed-range,
+.page-status {
+  font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--muted);
+}
+.feed-range strong,
+.page-status strong { color: var(--accent); font-weight: 400; }
+.pagination {
+  justify-content: center; flex-wrap: wrap;
+  margin: 1.25rem 0 0;
+}
+.pagination.top {
+  margin: 0;
+}
+.page-controls {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;
+  flex-wrap: wrap; min-width: 0; max-width: 100%;
+}
+.page-btn {
+  min-width: 34px; height: 34px; padding: 0 0.65rem;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: transparent; color: var(--muted);
+  font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.04em;
+  cursor: pointer; transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+.page-btn:hover:not(:disabled) { border-color: var(--accent-dim); color: var(--accent); background: var(--accent-glow); }
+.page-btn.active {
+  border-color: var(--accent); color: var(--accent); background: var(--accent-glow);
+  cursor: default;
+}
+.page-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+.page-ellipsis {
+  min-width: 18px; text-align: center; color: var(--muted);
+  font-family: var(--mono); font-size: 0.7rem;
 }
 
 /* Share bar — inline at bottom */
@@ -398,6 +447,8 @@ article:hover .share-bar { opacity: 1; transform: translateY(0); }
   .sidebar-backdrop.open { display: block; }
   .main { margin-left: 0; padding-top: 52px; }
   .feed-scroll { padding: 1rem 0.75rem 4rem; }
+  .feed-toolbar { align-items: flex-start; flex-direction: column; }
+  .pagination.top { width: 100%; justify-content: flex-start; }
   h2 { font-size: 1.25rem; }
   .article-body { padding: 1.25rem; }
 }
@@ -555,6 +606,8 @@ function api(p){return location.port==='8420'?p:'/api.php?action='+(_apiMap[p]||
 
 let DATA = null;
 let activeTags = new Set();
+const PAGE_SIZE = 20;
+let currentPage = 1;
 
 const SVG = {
   x: '<svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
@@ -632,6 +685,59 @@ function clearFilters() {
   render();
 }
 
+function setPage(page) {
+  currentPage = page;
+  render({ preservePage: true, scrollToTop: true });
+}
+
+function getPageList(totalPages) {
+  const pages = [];
+  for (let i = 1; i <= totalPages; i++) {
+    const nearCurrent = Math.abs(i - currentPage) <= 1;
+    const nearStart = i <= 2;
+    const nearEnd = i >= totalPages - 1;
+    if (nearStart || nearEnd || nearCurrent) {
+      pages.push(i);
+    } else if (pages[pages.length - 1] !== '...') {
+      pages.push('...');
+    }
+  }
+  return pages;
+}
+
+function buildPagination(totalPages, position) {
+  if (totalPages <= 1) return '';
+  const parts = getPageList(totalPages).map(p => {
+    if (p === '...') return '<span class="page-ellipsis" aria-hidden="true">...</span>';
+    const active = p === currentPage ? ' active' : '';
+    const aria = p === currentPage ? ` aria-current="page"` : '';
+    return `<button class="page-btn${active}" onclick="setPage(${p})"${aria}>${p}</button>`;
+  }).join('');
+  const prevDisabled = currentPage === 1 ? ' disabled' : '';
+  const nextDisabled = currentPage === totalPages ? ' disabled' : '';
+  return `<nav class="pagination ${position}" aria-label="${position === 'top' ? 'Top pagination' : 'Pagination'}">
+    <div class="page-controls">
+      <button class="page-btn" onclick="setPage(${currentPage - 1})"${prevDisabled}>Prev</button>
+      ${parts}
+      <button class="page-btn" onclick="setPage(${currentPage + 1})"${nextDisabled}>Next</button>
+    </div>
+  </nav>`;
+}
+
+function buildFeedToolbar(start, end, total, totalPages) {
+  const range = total
+    ? `Showing <strong>${start + 1}-${end}</strong> of <strong>${total}</strong>`
+    : 'Showing <strong>0</strong>';
+  const pageStatus = totalPages > 1
+    ? `<span class="page-status">Page <strong>${currentPage}</strong> of <strong>${totalPages}</strong></span>`
+    : '';
+  return `<div class="feed-toolbar">
+    <span class="feed-range">${range}</span>
+    ${pageStatus}
+    ${buildPagination(totalPages, 'top')}
+  </div>`;
+}
+
 function renderPills(f) {
   const box = document.getElementById('activePills');
   box.innerHTML = '';
@@ -702,8 +808,9 @@ function buildCard(a, idx) {
 </article>`;
 }
 
-function render() {
+function render(options = {}) {
   if (!DATA) return;
+  if (!options.preservePage) currentPage = 1;
   const f = getFilters();
   const filtered = DATA.articles.filter(a => {
     if (f.q) {
@@ -722,15 +829,25 @@ function render() {
     }
     return true;
   });
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, filtered.length);
+  const pageArticles = filtered.slice(start, end);
   const grid = document.getElementById('feedGrid');
   if (filtered.length === 0) {
     grid.innerHTML = '<div class="no-results"><h3>No stories match</h3><p>Try adjusting your filters.</p></div>';
   } else {
-    grid.innerHTML = filtered.map((a, i) => buildCard(a, i)).join('\n');
+    grid.innerHTML = buildFeedToolbar(start, end, filtered.length, totalPages)
+      + pageArticles.map((a, i) => buildCard(a, i)).join('\n')
+      + buildPagination(totalPages, 'bottom');
   }
   document.getElementById('filterCountNum').textContent = filtered.length;
   document.getElementById('statStories').textContent = filtered.length;
   renderPills(f);
+  if (options.scrollToTop) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }
 
 function toggleTags() {

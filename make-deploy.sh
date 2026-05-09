@@ -26,20 +26,36 @@ cat > deploy.sh << EOF
 #!/bin/bash
 # Deploy $SITE_NAME
 # Usage: ./deploy.sh [--all]
+set -euo pipefail
 
 KEY="$SSH_KEY"
 USER="$SFTP_USER"
 HOST="$SFTP_HOST"
 PORT="$SFTP_PORT"
 REMOTE="$REMOTE_PATH"
-LOCAL="\$(dirname "\$0")"
+LOCAL="\$(cd "\$(dirname "\$0")" && pwd)"
 
 echo "  Deploying $SITE_NAME..."
 echo ""
 
-if [ "\$1" = "--all" ]; then
+ASKPASS=""
+if grep -q '^ssh_pw=' "\$LOCAL/.env" 2>/dev/null; then
+  ASKPASS="\$(mktemp /tmp/seriously-siteground-askpass.XXXXXX)"
+  export SERIOUSLY_DEPLOY_LOCAL="\$LOCAL"
+  cat > "\$ASKPASS" <<'ASKPASS_EOF'
+#!/bin/sh
+awk -F= '/^ssh_pw=/{print substr(\$0, index(\$0, "=") + 1); exit}' "\$SERIOUSLY_DEPLOY_LOCAL/.env"
+ASKPASS_EOF
+  chmod 700 "\$ASKPASS"
+  export SSH_ASKPASS="\$ASKPASS"
+  export SSH_ASKPASS_REQUIRE=force
+  export DISPLAY="\${DISPLAY:-:0}"
+  trap 'rm -f "\$ASKPASS"' EXIT
+fi
+
+if [ "\${1:-}" = "--all" ]; then
   echo "  Mode: full deploy (all files)"
-  sftp -o IdentitiesOnly=yes -P \$PORT -i "\$KEY" \${USER}@\${HOST} << SFTP
+  sftp -o BatchMode=no -o PreferredAuthentications=publickey -o IdentitiesOnly=yes -P \$PORT -i "\$KEY" \${USER}@\${HOST} << SFTP
 cd \$REMOTE
 put \$LOCAL/.htaccess
 put \$LOCAL/.env
@@ -57,7 +73,7 @@ chmod 666 feed_etags.json
 SFTP
 else
   echo "  Mode: code deploy (HTML, PHP, config)"
-  sftp -o IdentitiesOnly=yes -P \$PORT -i "\$KEY" \${USER}@\${HOST} << SFTP
+  sftp -o BatchMode=no -o PreferredAuthentications=publickey -o IdentitiesOnly=yes -P \$PORT -i "\$KEY" \${USER}@\${HOST} << SFTP
 cd \$REMOTE
 put \$LOCAL/.htaccess
 put \$LOCAL/aggregated_feed.html
